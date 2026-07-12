@@ -1,21 +1,13 @@
-// Dùng node:sqlite built-in (Node.js >= 22.5) — không cần cài thêm gì
-const { DatabaseSync } = require("node:sqlite");
+const { createClient } = require("@libsql/client");
 const http = require("http");
 
 const PORT = process.env.PORT || 3000;
-const db = new DatabaseSync("links.db");
 
-db.exec(`CREATE TABLE IF NOT EXISTS links (
-  slug TEXT PRIMARY KEY,
-  destination_url TEXT NOT NULL
-)`);
-
-const upsert = db.prepare(
-  `INSERT INTO links (slug, destination_url) VALUES (?, ?)
-   ON CONFLICT(slug) DO UPDATE SET destination_url = excluded.destination_url`
-);
-const find    = db.prepare(`SELECT destination_url FROM links WHERE slug = ?`);
-const listAll = db.prepare(`SELECT slug, destination_url FROM links ORDER BY slug`);
+// Local SQLite khi dev, Turso khi production
+const db = createClient({
+  url: process.env.TURSO_DATABASE_URL || "file:links.db",
+  authToken: process.env.TURSO_AUTH_TOKEN,
+});
 
 const HTML = `<!DOCTYPE html>
 <html lang="vi">
@@ -74,52 +66,62 @@ load();
 </body>
 </html>`;
 
-http
-  .createServer((req, res) => {
-    const { pathname } = new URL(req.url, "http://x");
-    const slug = pathname.slice(1);
+async function handle(req, res) {
+  const { pathname } = new URL(req.url, "http://x");
+  const slug = pathname.slice(1);
 
-    // GET / → trang quản lý
-    if (req.method === "GET" && slug === "") {
-      res.writeHead(200, { "Content-Type": "text/html; charset=utf-8" });
-      return res.end(HTML);
-    }
+  // GET / → trang quản lý
+  if (req.method === "GET" && slug === "") {
+    res.writeHead(200, { "Content-Type": "text/html; charset=utf-8" });
+    return res.end(HTML);
+  }
 
-    // GET /--list → danh sách JSON (dùng cho UI)
-    if (req.method === "GET" && slug === "--list") {
-      const rows = listAll.all().map(r => ({ slug: r.slug, url: r.destination_url }));
-      res.writeHead(200, { "Content-Type": "application/json" });
-      return res.end(JSON.stringify(rows));
-    }
+  // GET /--list → danh sách JSON
+  if (req.method === "GET" && slug === "--list") {
+    const { rows } = await db.execute("SELECT slug, destination_url FROM links ORDER BY slug");
+    res.writeHead(200, { "Content-Type": "application/json" });
+    return res.end(JSON.stringify(rows.map(r => ({ slug: r.slug, url: r.destination_url }))));
+  }
 
-    // POST /add
-    if (req.method === "POST" && slug === "add") {
-      let body = "";
-      req.on("data", (c) => (body += c));
-      req.on("end", () => {
-        try {
-          const { slug: s, url: u } = JSON.parse(body);
-          if (!s || !u) { res.writeHead(400); return res.end("Missing slug or url"); }
-          upsert.run(s, u);
-          res.writeHead(200, { "Content-Type": "application/json" });
-          res.end(JSON.stringify({ ok: true, slug: s, url: u }));
-        } catch {
-          res.writeHead(400); res.end("Invalid JSON");
-        }
+  // POST /add
+  if (req.method === "POST" && slug === "add") {
+    const body = await new Promise(r => { let d=""; req.on("data",c=>d+=c); req.on("end",()=>r(d)); });
+    try {
+      const { slug: s, url: u } = JSON.parse(body);
+      if (!s || !u) { res.writeHead(400); return res.end("Missing slug or url"); }
+      await db.execute({
+        sql: `INSERT INTO links (slug, destination_url) VALUES (?, ?)
+              ON CONFLICT(slug) DO UPDATE SET destination_url = excluded.destination_url`,
+        args: [s, u]
       });
-      return;
+      res.writeHead(200, { "Content-Type": "application/json" });
+      return res.end(JSON.stringify({ ok: true, slug: s, url: u }));
+    } catch {
+      res.writeHead(400); return res.end("Invalid JSON");
     }
+  }
 
-    // GET /:slug → redirect
-    if (req.method === "GET" && slug) {
-      const row = find.get(slug);
-      if (row) {
-        res.writeHead(302, { Location: row.destination_url });
-        return res.end();
-      }
-      res.writeHead(404); return res.end("Not found");
+  // GET /:slug → redirect
+  if (req.method === "GET" && slug) {
+    const { rows } = await db.execute({ sql: "SELECT destination_url FROM links WHERE slug = ?", args: [slug] });
+    if (rows[0]) {
+      res.writeHead(302, { Location: rows[0].destination_url });
+      return res.end();
     }
+    res.writeHead(404); return res.end("Not found");
+  }
 
-    res.writeHead(404); res.end("Not found");
-  })
-  .listen(PORT, () => console.log(`✓ Running → http://localhost:${PORT}`));
+  res.writeHead(404); res.end("Not found");
+}
+
+async function main() {
+  await db.execute(`CREATE TABLE IF NOT EXISTS links (
+    slug TEXT PRIMARY KEY,
+    destination_url TEXT NOT NULL
+  )`);
+  http.createServer((req, res) => {
+    handle(req, res).catch(e => { console.error(e); res.writeHead(500); res.end("Error"); });
+  }).listen(PORT, () => console.log(`✓ Running → http://localhost:${PORT}`));
+}
+
+main();

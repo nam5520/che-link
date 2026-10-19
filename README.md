@@ -1,57 +1,42 @@
-# che-link
+# Z HOST - Hệ Thống Quản Lý Mã Nguồn (Code Panel)
 
-Ứng dụng tối giản: lưu slug → redirect URL. **1 file, 0 dependency.**
+Ứng dụng quản trị và cấu hình mã code trực tiếp mang phong cách công nghệ cao **Z HOST - TECH LEADS FUTURE**.
 
-## Yêu cầu
+![Z HOST](public/logo.png)
 
-- Node.js >= 22.5 (có sẵn `node:sqlite` built-in)
+---
 
-## Chạy
+## 🌐 Các cổng truy cập
+
+- **Cổng Quản Trị & Đăng Nhập**: [http://localhost:3000/admin](http://localhost:3000/admin)  
+  *(Đăng nhập vào bảng điều khiển 1 Panel để đưa mã code lên hệ thống)*
+- **Trang hiển thị Live (Trang chủ)**: [http://localhost:3000/](http://localhost:3000/)  
+  *(Hiển thị trực tiếp mã nguồn HTML/JS/CSS đã được lưu từ Admin Panel)*
+
+---
+
+## 🔑 Tài khoản đăng nhập quản trị
+
+| Mục | Thông tin |
+| :--- | :--- |
+| **Đường dẫn đăng nhập** | [http://localhost:3000/admin](http://localhost:3000/admin) |
+| **Username** | `xnknoch1` |
+| **Password** | `zvw2[S3z.P5Y0Q` |
+
+---
+
+## ⚡ Tính năng trong Admin Panel
+- **Khung Code duy nhất**: Hỗ trợ dán hoặc soạn thảo mã nguồn (HTML, JavaScript, CSS, Iframe, v.v.).
+- **Phím tắt tiện lợi**: Bấm `Ctrl + S` để lưu nhanh code bất cứ lúc nào.
+- **Xem Trang Live**: Nút mở trực tiếp trang chủ để xem kết quả mã nguồn đang chạy.
+- **Sao chép & Xóa trắng**: Thao tác nhanh với 1 cú click.
+
+---
+
+## 🚀 Khởi chạy server
 
 ```bash
-node --experimental-sqlite server.js
-# hoặc
+npm install
 npm start
+# hoặc: node server.js
 ```
-
-Mặc định lắng nghe tại `http://localhost:3000`.  
-Đổi port: `PORT=8080 node --experimental-sqlite server.js`
-
----
-
-## Dùng
-
-### Thêm / cập nhật link
-
-```bash
-curl -X POST http://localhost:3000/add \
-  -H "Content-Type: application/json" \
-  -d '{"slug":"anime","url":"https://example.com/very/long/link"}'
-```
-
-Phản hồi:
-```json
-{ "ok": true, "slug": "anime", "url": "https://example.com/very/long/link" }
-```
-
-> Nếu slug đã tồn tại → URL được cập nhật.
-
-### Redirect
-
-```
-GET http://localhost:3000/anime
-→ 302 Location: https://example.com/very/long/link
-```
-
-Mở trình duyệt hoặc dùng curl:
-```bash
-curl -L http://localhost:3000/anime
-```
-
-Nếu slug không tồn tại → **404 Not found**.
-
----
-
-## Dữ liệu
-
-Lưu trong file `links.db` (SQLite) cùng thư mục. Tự tạo khi khởi động lần đầu.

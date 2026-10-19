@@ -12,11 +12,13 @@ const db = createClient({
   authToken: process.env.TURSO_AUTH_TOKEN,
 });
 
-// Cache logo buffer
+// Logo path - đọc file mỗi lần request để dễ thay đổi logo mà không cần restart
 const LOGO_PATH = path.join(__dirname, "public", "logo.png");
-let logoBuffer = null;
-if (fs.existsSync(LOGO_PATH)) {
-  logoBuffer = fs.readFileSync(LOGO_PATH);
+function getLogoBuffer() {
+  if (fs.existsSync(LOGO_PATH)) {
+    return fs.readFileSync(LOGO_PATH);
+  }
+  return null;
 }
 
 // In-memory active session tokens
@@ -1068,10 +1070,13 @@ async function handle(req, res) {
 
   // 1. Phục vụ logo: GET /logo.png
   if (req.method === "GET" && pathname === "/logo.png") {
+    const logoBuffer = getLogoBuffer();
     if (logoBuffer) {
       res.writeHead(200, {
-        "Content-Type": "image/png",
-        "Cache-Control": "public, max-age=86400",
+        "Content-Type": "image/jpeg",
+        "Cache-Control": "no-cache, no-store, must-revalidate",
+        "Pragma": "no-cache",
+        "Expires": "0",
       });
       return res.end(logoBuffer);
     } else {

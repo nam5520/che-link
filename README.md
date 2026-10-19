@@ -1,8 +1,8 @@
-# Z HOST - Hệ Thống Quản Lý Mã Nguồn (Code Panel)
+# Z HORT - Hệ Thống Quản Lý Mã Nguồn (Code Panel)
 
-Ứng dụng quản trị và cấu hình mã code trực tiếp mang phong cách công nghệ cao **Z HOST - TECH LEADS FUTURE**.
+Ứng dụng quản trị và cấu hình mã code trực tiếp mang phong cách công nghệ cao **Z HORT - TECH LEADS FUTURE**.
 
-![Z HOST](public/logo.png)
+![Z HORT](public/logo.png)
 
 ---
 

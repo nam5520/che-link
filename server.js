@@ -46,7 +46,7 @@ function parseCookies(req) {
 
 function getAuthenticatedUser(req) {
   const cookies = parseCookies(req);
-  const token = cookies.zhost_session || req.headers["x-session-token"];
+  const token = cookies.zhort_session || cookies.zhost_session || req.headers["x-session-token"];
   if (!token) return null;
   const session = SESSIONS.get(token);
   if (!session) return null;
@@ -65,7 +65,7 @@ const ADMIN_HTML = `<!DOCTYPE html>
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Z HOST - Quản Trị Hệ Thống (/admin)</title>
+  <title>Z HORT - Quản Trị Hệ Thống (/admin)</title>
   <link rel="icon" type="image/png" href="/logo.png">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -668,13 +668,13 @@ const ADMIN_HTML = `<!DOCTYPE html>
       <div class="login-card">
         <div class="logo-container">
           <div class="logo-badge">
-            <img src="/logo.png" alt="Z HOST Logo" class="logo-img">
+            <img src="/logo.png" alt="Z HORT Logo" class="logo-img">
           </div>
         </div>
 
         <div class="login-header">
           <h1>Đăng Nhập Quản Trị</h1>
-          <p>Hệ thống quản trị Z HOST (/admin)</p>
+          <p>Hệ thống quản trị Z HORT (/admin)</p>
         </div>
 
         <div id="loginAlert" class="login-alert"></div>
@@ -717,7 +717,7 @@ const ADMIN_HTML = `<!DOCTYPE html>
         </form>
 
         <div class="login-footer">
-          &copy; Z HOST &bull; TECH LEADS FUTURE &bull; All Rights Reserved
+          &copy; Z HORT &bull; TECH LEADS FUTURE &bull; All Rights Reserved
         </div>
       </div>
     </div>
@@ -728,10 +728,10 @@ const ADMIN_HTML = `<!DOCTYPE html>
         <div class="nav-inner">
           <div class="nav-brand">
             <div class="nav-logo-badge">
-              <img src="/logo.png" alt="Z HOST Logo" class="nav-logo-img">
+              <img src="/logo.png" alt="Z HORT Logo" class="nav-logo-img">
             </div>
             <div class="nav-title">
-              Z HOST <span class="nav-tag">Quản Trị</span>
+              Z HORT <span class="nav-tag">Quản Trị</span>
             </div>
           </div>
 
@@ -1117,7 +1117,7 @@ async function handle(req, res) {
         expiresAt: Date.now() + maxAgeMs,
       });
 
-      const cookieVal = `zhost_session=${token}; Path=/; HttpOnly; SameSite=Lax; Max-Age=${Math.floor(maxAgeMs / 1000)}`;
+      const cookieVal = `zhort_session=${token}; Path=/; HttpOnly; SameSite=Lax; Max-Age=${Math.floor(maxAgeMs / 1000)}`;
       return sendJson(res, 200, { ok: true, user: { username: user.username } }, { "Set-Cookie": cookieVal });
     } catch (e) {
       return sendJson(res, 400, { ok: false, message: "Dữ liệu không hợp lệ." });
@@ -1127,10 +1127,10 @@ async function handle(req, res) {
   // 4. API Đăng Xuất: POST /api/logout
   if (req.method === "POST" && pathname === "/api/logout") {
     const cookies = parseCookies(req);
-    const token = cookies.zhost_session;
+    const token = cookies.zhort_session || cookies.zhost_session;
     if (token) SESSIONS.delete(token);
     return sendJson(res, 200, { ok: true }, {
-      "Set-Cookie": "zhost_session=; Path=/; HttpOnly; Max-Age=0",
+      "Set-Cookie": "zhort_session=; Path=/; HttpOnly; Max-Age=0",
     });
   }
 
@@ -1189,7 +1189,7 @@ async function handle(req, res) {
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Z HOST</title>
+  <title>Z HORT</title>
   <style>
     body {
       background: #090d16;
@@ -1225,8 +1225,8 @@ async function handle(req, res) {
 </head>
 <body>
   <div class="box">
-    <div><img src="/logo.png" alt="Z HOST" class="logo"></div>
-    <h2>Hệ Thống Z HOST Đang Hoạt Động</h2>
+    <div><img src="/logo.png" alt="Z HORT" class="logo"></div>
+    <h2>Hệ Thống Z HORT Đang Hoạt Động</h2>
     <p>Chưa có mã nguồn nào được thiết lập. Vui lòng truy cập <a href="/admin">Cổng Quản Trị (/admin)</a> để đưa mã code lên hệ thống.</p>
   </div>
 </body>
@@ -1282,7 +1282,7 @@ async function main() {
         res.end("Server Internal Error");
       });
     }).listen(PORT, () => {
-      console.log(`✓ Z HOST Server đang chạy tại: http://localhost:${PORT}`);
+      console.log(`✓ Z HORT Server đang chạy tại: http://localhost:${PORT}`);
       console.log(`✓ Cổng Đăng Nhập Quản Trị: http://localhost:${PORT}/admin`);
       console.log(`✓ Tài khoản: xnknoch1`);
     });
